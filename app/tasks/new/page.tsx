@@ -1,10 +1,12 @@
+// app/tasks/new/page.tsx
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { Suspense, FormEvent, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function NewTaskPage() {
+// Inner component that actually uses useSearchParams
+function NewTaskContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -84,6 +86,12 @@ export default function NewTaskPage() {
       <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
         <h1 className="text-2xl font-semibold mb-2">Submit a Coding Task</h1>
 
+        {errorMsg && (
+          <p className="mb-3 text-xs text-red-400 bg-red-950/40 border border-red-900 rounded-md px-3 py-2">
+            {errorMsg}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm mb-1">Title</label>
@@ -126,5 +134,20 @@ export default function NewTaskPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+// Default export wrapped in Suspense for useSearchParams
+export default function NewTaskPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
+          <p className="text-slate-300 text-sm">Loading new task form...</p>
+        </main>
+      }
+    >
+      <NewTaskContent />
+    </Suspense>
   );
 }
