@@ -1,7 +1,7 @@
 // app/payments/checkout/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
@@ -13,7 +13,8 @@ type Task = {
   user_id: string;
 };
 
-export default function CheckoutPage() {
+// This component actually uses useSearchParams and handles the logic
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const taskId = searchParams.get("taskId");
@@ -89,7 +90,7 @@ export default function CheckoutPage() {
         task_id: task.id,
         amount: 99.0,
         currency: "INR",
-        status: "success", // in real world, comes from Razorpay/Stripe
+        status: "success", // fake payment, no Razorpay/Stripe for now
       });
 
       if (payError) throw new Error(payError.message);
@@ -195,5 +196,20 @@ export default function CheckoutPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+// This is the actual page exported to Next.js, wrapped in Suspense
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
+          <p className="text-slate-300 text-sm">Loading checkout...</p>
+        </main>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
