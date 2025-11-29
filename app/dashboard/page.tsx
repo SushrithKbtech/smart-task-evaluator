@@ -96,6 +96,12 @@ export default function DashboardPage() {
             >
               Code Editing Requirement
             </Link>
+            <Link
+              href="/reports"
+              className="text-sm px-3 py-1.5 rounded-md bg-indigo-500 hover:bg-indigo-600"
+            >
+              Past Reports
+            </Link>
           </div>
         </div>
 
