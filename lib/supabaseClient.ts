@@ -1,0 +1,16 @@
+// lib/supabaseClient.ts
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  // This will show a clear error if env is missing,
+  // instead of some random runtime crash later.
+  throw new Error("Missing Supabase env vars. Check .env.local");
+}
+
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
