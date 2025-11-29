@@ -51,10 +51,16 @@ The JSON shape MUST be exactly:
   "improvements": string[]  // list of concrete improvements
 }
 
-In "improvements", include AT LEAST one item for each of these categories (if applicable):
-- Start bug-related items with "Bug Fix:"
-- Start refactor-related items with "Refactor:"
-- Start performance-related items with "Performance:"
+In \`improvements\`, include AT LEAST one item for each of these categories (if applicable):
+- Start bug-related items with **"Bug Fix:"**
+- Start refactor-related items with **"Refactor:"**
+- Give the entire refactored code with the bug fixes.
+- Start performance-related items with **"Performance:"**
+
+Example improvements entries:
+- "Bug Fix: handle null input for 'user' parameter."
+- "Refactor: extract validation into a separate helper function."
+- "Performance: avoid O(n^2) nested loop by using a hash map."
 
 Do not include any explanations, markdown, comments, or text outside the JSON object.
 Return a single JSON object only.
@@ -69,49 +75,37 @@ Return a single JSON object only.
       ],
       generationConfig: {
         temperature: 0.2,
-        // Ask Gemini to give us pure JSON text
         responseMimeType: "application/json",
       } as any,
     });
 
     const rawText = result.response.text().trim();
 
+    let jsonText = rawText;
+
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/^```[a-zA-Z]*\s*/, "");
+      const endIndex = jsonText.lastIndexOf("```");
+      if (endIndex !== -1) {
+        jsonText = jsonText.slice(0, endIndex).trim();
+      }
+    } else {
+      const firstBrace = jsonText.indexOf("{");
+      const lastBrace = jsonText.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonText = jsonText.slice(firstBrace, lastBrace + 1);
+      }
+    }
+
     let parsed: any;
-
-    // First attempt: assume it's already clean JSON (because of responseMimeType)
     try {
-      parsed = JSON.parse(rawText);
-    } catch (firstErr) {
-      // Fallback: handle the case where it still wrapped in ``` or extra junk
-      let jsonText = rawText;
-
-      if (jsonText.startsWith("```")) {
-        jsonText = jsonText.replace(/^```[a-zA-Z]*\s*/, "");
-        const endIndex = jsonText.lastIndexOf("```");
-        if (endIndex !== -1) {
-          jsonText = jsonText.slice(0, endIndex).trim();
-        }
-      } else {
-        const firstBrace = jsonText.indexOf("{");
-        const lastBrace = jsonText.lastIndexOf("}");
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          jsonText = jsonText.slice(firstBrace, lastBrace + 1);
-        }
-      }
-
-      try {
-        parsed = JSON.parse(jsonText);
-      } catch (secondErr) {
-        console.error("Gemini JSON parse failed", {
-          rawText,
-          firstErr,
-          secondErr,
-        });
-        return NextResponse.json(
-          { error: "Gemini returned invalid JSON" },
-          { status: 500 }
-        );
-      }
+      parsed = JSON.parse(jsonText);
+    } catch (e) {
+      console.error("Gemini JSON parse failed. Raw text:", rawText);
+      return NextResponse.json(
+        { error: "Gemini returned invalid JSON" },
+        { status: 500 }
+      );
     }
 
     if (
